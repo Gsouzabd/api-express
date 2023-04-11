@@ -5,7 +5,7 @@ class authorController{
   /*
     ** List all author from database
     */
-  static getAllauthors = async (req,res) =>{
+  static getAllauthors = async (req, res, next) =>{
 
     try {   
       const author = await authors.find();
@@ -13,7 +13,7 @@ class authorController{
       res.status(200).json(author);
       
     } catch (error) {
-      res.status(500).json({message: `${error.message}`});
+      next(error);
     }
         
   };
@@ -22,7 +22,7 @@ class authorController{
   /*
     ** Retrieve a author from database
     */
-  static retrieveAuthor = async (req,res) =>{
+  static retrieveAuthor = async (req, res, next) =>{
 
     const {id} = req.params;
 
@@ -31,7 +31,7 @@ class authorController{
       res.status(200).json(author);
       
     } catch (error) {
-      res.status(400).json({message: `${error.message}`});
+      next(error);
     }
   };
 
@@ -40,23 +40,26 @@ class authorController{
   /*
     ** Insert a author in database
     */
-  static createAuthor = async (req,res) =>{
+  static createAuthor = async (req, res, next) =>{
 
     try{
       const author = await new authors(req.body);
 
-      authors.save();
-      res.status(201).json(author);
+      const authorCreated = await authors.save();
+      
+      if (authorCreated !== null) {
+        res.status(201).json(authorCreated);
+      }
       
     } catch (error) {
-      res.status(500).json({message: `${error.message}`});
+      next(error);
     }
   };
 
   /*
     ** Update a author by id
     */
-  static updateAuthor = async (req,res) =>{
+  static updateAuthor = async (req, res, next) =>{
 
     let {id} = req.params;
     try{
@@ -64,7 +67,7 @@ class authorController{
       res.status(201).json(author);
       
     } catch (error) {
-      res.status(400).json({message: `${error.message}`});
+      next(error);
     }
         
   };
@@ -73,7 +76,7 @@ class authorController{
   /*
     ** Delete a author from database
     */
-  static deleteAuthor = async (req,res) =>{
+  static deleteAuthor = async (req, res, next) =>{
 
     let {id} = req.params;
     try{
@@ -81,7 +84,7 @@ class authorController{
       res.status(201).send({message: "Author succesfully deleted"});
       
     } catch (error) {
-      res.status(400).json({message: `${error.message}`});
+      next(error);
     }
 
   };

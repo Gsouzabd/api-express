@@ -1,11 +1,14 @@
 import books from "../models/Book.js";
+import authors from "../models/Author.js";
+
+
 
 class BooksController{
 
   /*
     ** List all books from database
     */
-  static getAllBooks = async (req,res) =>{
+  static getAllBooks = async (req, res, next) =>{
 
     try {
       const book = await books.find()
@@ -17,7 +20,7 @@ class BooksController{
         res.status(200).json(book);
       }
     } catch (error) {
-      res.status(500).json({message: `${error.message} `});
+      next(error);
     }     
   };
 
@@ -25,7 +28,7 @@ class BooksController{
   /*
     ** Retrieve a book from database
     */
-  static retrieveBook = async (req,res) =>{
+  static retrieveBook = async (req, res, next) =>{
 
     try {
       const {id} = req.params;
@@ -40,10 +43,9 @@ class BooksController{
         res.status(201).send(book);
 
       }
-
-      
+    
     } catch (error) {
-      res.status(404).json({message: "Not Found"});
+      next(error);
     }
   };
 
@@ -51,70 +53,40 @@ class BooksController{
   /*
     ** Search a book with conditions passed in query 
     */
-  static findByParams = async (req, res) =>{
+  static findByParams = async (req, res, next) =>{
+ 
+    try{
 
-    const publisher = req.query.publisher;
-    const author = req.query.author;
-  
-    if(publisher && author){
-      try {
-        const book = await books.find({"author": author, "publisher": publisher});
+      const search = await processSearch(req.query);
 
-        if (book !== null) {
-          res.status(200).send(book);
-        }
-  
-      }catch (error) {
-        res.status(404).json({message: "Book not found"});
-      }
+      const bookFound = await books.find(search);
+
+      res.status(200).send(bookFound)
+    }catch(error){
+      console.log(error);
+      next(error);
     }
+    
+
+  };
   
-    else if(author){
-      try{
-        const book = await books.find({"author": author});
-
-        if (book !== null) {
-          res.status(200).send(book);
-        }
-      }catch(error){
-        res.status(404).send({message: `${error.message} - Book not found by author`});
-
-      }
-    }
-  
-    else if(publisher){
-      try {
-        const book = await books.find({"publisher": publisher});
-          
-        if (book !== null) {
-          res.status(200).send(book);
-        }
-          
-      } catch (error) {
-        res.status(404).send({message: `${error.message} - Book not found by publisher`});
-
-      }
-    }
-
-  }; 
-
 
   /*
     ** Insert a book in database
     */
-  static createBook = async (req,res) =>{
+  static createBook = async (req, res, next) =>{
 
     try {
-      const book = await new books(req.body);
+      const book =  new books(req.body);
 
-      book.save();
+      const bookCreated = await book.save();
 
-      if (book !== null) {
-        res.status(201).send(JSON.stringify(book));
+      if (bookCreated !== null) {
+        res.status(201).send(JSON.stringify(bookCreated));
       }
      
     } catch (error) {
-      res.status(500).json({message: `${error.message}`});
+      next(error);
     }
 
   };
@@ -122,7 +94,7 @@ class BooksController{
   /*
     ** Update a book by id
     */
-  static updateBook = async (req,res) =>{
+  static updateBook = async (req, res, next) =>{
 
     try {
 
@@ -134,7 +106,7 @@ class BooksController{
       }
       
     } catch (error) {
-      res.status(404).json({message: `Book not found. ${error.message}`});
+      next(error);
     }
         
   };
@@ -143,7 +115,7 @@ class BooksController{
   /*
     ** Delete a book from database
     */
-  static deleteBook = async (req,res) =>{
+  static deleteBook = async (req, res, next) =>{
 
     try {
       let {id} = req.params;
@@ -153,12 +125,40 @@ class BooksController{
       res.status(201).send({message:"Book successfully deleted!"});
 
     } catch (error) {
-      res.status(404).json({message: `Book not found. ${error.message}`});
+
+      next(error);
     }
 
   };
 
 
+}
+
+
+/*
+**Function for searching by params passed in req.query
+*/
+async function processSearch(parameters){
+
+  const {publisher, title, pagesNumber, author} = parameters;
+
+  const search = {}
+
+  if(publisher) search.publisher = publisher;
+
+  if(title) search.title =  {$regex: title, $options: "i"};
+
+  if(author){
+
+    const authorName = {$regex: author, $options: "i"}
+    const authorFound = await authors.findOne({name: authorName});
+
+    const authorId = authorFound._id;
+
+    search.author = authorId;
+  }
+
+  return search;
 }
 
 

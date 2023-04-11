@@ -1,7 +1,7 @@
 import express from "express";
 import db from "./config/dbConnect.js";
 import routes from "./routes/index.js";
-
+import handleErrors from "./middlewares/handleErrors.js"
 
 /*
 **Inicializa conexão com banco utilizando let "db" (mongoose)
@@ -12,12 +12,16 @@ db.once("open", ()=>{
 });
 
 const app = express();
-
 app.use(express.json());
 
 /*
 **Rotas express
 */
 routes(app);
+
+/*
+**Trata erros
+*/
+app.use(handleErrors);
 
 export default app;
