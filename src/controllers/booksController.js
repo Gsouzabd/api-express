@@ -11,7 +11,11 @@ class BooksController{
   static getAllBooks = async (req, res, next) =>{
 
     try {
+      const {limit = 10, page = 1} = req.query;
+
       const book = await books.find()
+        .skip((page - 1) * limit)
+        .limit(limit)
         .populate("author")
         .populate("publisher")
         .exec();
@@ -61,7 +65,7 @@ class BooksController{
 
       const bookFound = await books.find(search);
 
-      res.status(200).send(bookFound)
+      res.status(200).send(bookFound);
     }catch(error){
       console.log(error);
       next(error);
@@ -140,9 +144,9 @@ class BooksController{
 */
 async function processSearch(parameters){
 
-  const {publisher, title, pagesNumber, author} = parameters;
+  const {publisher, title, author} = parameters;
 
-  const search = {}
+  const search = {};
 
   if(publisher) search.publisher = publisher;
 
@@ -150,7 +154,7 @@ async function processSearch(parameters){
 
   if(author){
 
-    const authorName = {$regex: author, $options: "i"}
+    const authorName = {$regex: author, $options: "i"};
     const authorFound = await authors.findOne({name: authorName});
 
     const authorId = authorFound._id;
