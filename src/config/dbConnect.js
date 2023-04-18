@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 mongoose.set("strictQuery", true);
-mongoose.connect(process.env.CONNECTION_DB_STRING);
+mongoose.connect("mongodb+srv://gabriel:gl110401@cluster0.d2abby1.mongodb.net/api-express");
 
 let db = mongoose.connection;
 
